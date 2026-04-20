@@ -40,10 +40,17 @@ class TTSSynthesizer:
             return cache_path
 
         logger.info(f"[tts] synthesizing {len(text)} chars via Edge TTS")
-        communicate = edge_tts.Communicate(text, self.voice)
-        await communicate.save(str(cache_path))
-        logger.info(f"[tts] saved: {cache_path.name}")
-        return cache_path
+        for attempt in range(3):
+            try:
+                communicate = edge_tts.Communicate(text, self.voice)
+                await communicate.save(str(cache_path))
+                logger.info(f"[tts] saved: {cache_path.name}")
+                return cache_path
+            except Exception as e:
+                if attempt < 2:
+                    await asyncio.sleep(1.5 ** attempt)
+                else:
+                    raise
 
     async def synthesize_ssml(self, ssml: str) -> Path:
         """Synthesize SSML markup."""

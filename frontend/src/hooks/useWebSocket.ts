@@ -8,6 +8,7 @@ export interface NowPlaying {
   score_reason?: string;
   url?: string;
   channel_id?: string;
+  audio_url?: string;
 }
 
 export function useWebSocket(url: string) {

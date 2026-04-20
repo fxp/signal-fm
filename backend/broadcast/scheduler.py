@@ -54,6 +54,7 @@ class BroadcastScheduler:
         if item is None:
             meta = {"status": "idle"}
         else:
+            audio_filename = Path(item.audio_path).name if item.audio_path else ""
             meta = {
                 "status": "playing",
                 "title": item.title,
@@ -62,6 +63,7 @@ class BroadcastScheduler:
                 "score_reason": item.score_reason,
                 "url": item.url,
                 "channel_id": item.channel_id,
+                "audio_url": f"/api/audio/{audio_filename}" if audio_filename else "",
             }
         for q in list(self._listeners):
             try:

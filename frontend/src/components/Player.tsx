@@ -1,5 +1,7 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { NowPlaying } from "../hooks/useWebSocket";
+
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
 interface Props {
   nowPlaying: NowPlaying;
@@ -9,16 +11,44 @@ interface Props {
 export default function Player({ nowPlaying, connected }: Props) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
+  const prevAudioUrl = useRef<string>("");
+
+  // Auto-load and play when audio_url changes
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !nowPlaying.audio_url) return;
+    if (nowPlaying.audio_url === prevAudioUrl.current) return;
+
+    prevAudioUrl.current = nowPlaying.audio_url;
+    audio.src = `${API_BASE}${nowPlaying.audio_url}`;
+    audio.load();
+    audio.play().then(() => setPlaying(true)).catch(() => {});
+  }, [nowPlaying.audio_url]);
+
+  // Sync playing state with audio element events
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
+    const onEnded = () => setPlaying(false);
+    audio.addEventListener("play", onPlay);
+    audio.addEventListener("pause", onPause);
+    audio.addEventListener("ended", onEnded);
+    return () => {
+      audio.removeEventListener("play", onPlay);
+      audio.removeEventListener("pause", onPause);
+      audio.removeEventListener("ended", onEnded);
+    };
+  }, []);
 
   const togglePlay = () => {
     const audio = audioRef.current;
     if (!audio) return;
     if (playing) {
       audio.pause();
-      setPlaying(false);
     } else {
-      audio.play();
-      setPlaying(true);
+      audio.play().catch(() => {});
     }
   };
 
@@ -78,7 +108,12 @@ export default function Player({ nowPlaying, connected }: Props) {
       {/* Controls */}
       <div style={styles.controls}>
         <audio ref={audioRef} />
-        <button style={styles.playBtn} onClick={togglePlay} title={playing ? "暂停" : "播放"}>
+        <button
+          style={{ ...styles.playBtn, opacity: nowPlaying.status === "playing" ? 1 : 0.4 }}
+          onClick={togglePlay}
+          title={playing ? "暂停" : "播放"}
+          disabled={nowPlaying.status !== "playing"}
+        >
           {playing ? "⏸" : "▶"}
         </button>
         <div style={styles.waveform}>
@@ -88,6 +123,11 @@ export default function Player({ nowPlaying, connected }: Props) {
             ))
           )}
         </div>
+        {nowPlaying.status === "idle" && (
+          <span style={{ fontSize: 12, color: "var(--text3)", marginLeft: 4 }}>
+            等待内容上播…
+          </span>
+        )}
       </div>
 
       <style>{`
@@ -172,7 +212,8 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
-    transition: "transform 0.1s",
+    transition: "transform 0.1s, opacity 0.2s",
+    cursor: "pointer",
   },
   waveform: { display: "flex", alignItems: "center", gap: 3, height: 24 },
   bar: {
