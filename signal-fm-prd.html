@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signal FM · 产品需求文档</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=IBM+Plex+Mono:wght@300;400;500&family=Noto+Serif+SC:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1a1208;
+  --paper: #f5f0e8;
+  --paper2: #ede8dc;
+  --accent: #c8401a;
+  --accent2: #1a5c8a;
+  --gold: #b8920a;
+  --rule: rgba(26,18,8,0.15);
+  --muted: #6b5e4a;
+  --tag-bg: rgba(200,64,26,0.08);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Noto Serif SC', serif;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+/* Grain texture */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.6;
+}
+
+/* TOP MASTHEAD */
+.masthead {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0;
+  text-align: center;
+  border-bottom: 4px solid var(--accent);
+}
+
+.masthead-top {
+  padding: 8px 40px;
+  border-bottom: 1px solid rgba(245,240,232,0.15);
+  display: flex;
+  justify-content: space-between;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: rgba(245,240,232,0.5);
+  letter-spacing: 1px;
+}
+
+.masthead-title {
+  padding: 32px 40px 24px;
+}
+
+.brand-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 72px;
+  font-weight: 900;
+  letter-spacing: -2px;
+  line-height: 1;
+  color: var(--paper);
+}
+
+.brand-name span { color: var(--accent); }
+
+.brand-tagline {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: rgba(245,240,232,0.5);
+  margin-top: 8px;
+  text-transform: uppercase;
+}
+
+.masthead-meta {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  padding: 12px 40px;
+  background: rgba(245,240,232,0.05);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: rgba(245,240,232,0.4);
+  letter-spacing: 1px;
+  border-top: 1px solid rgba(245,240,232,0.1);
+}
+
+/* NAV */
+.toc-bar {
+  background: var(--paper2);
+  border-bottom: 2px solid var(--rule);
+  padding: 0 40px;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.toc-bar::-webkit-scrollbar { height: 3px; }
+.toc-bar::-webkit-scrollbar-thumb { background: var(--accent); }
+
+.toc-link {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 12px 16px;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+
+.toc-link:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* MAIN LAYOUT */
+.layout {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 0;
+}
+
+.main-col {
+  padding: 48px 48px 80px 48px;
+  border-right: 1px solid var(--rule);
+}
+
+.side-col {
+  padding: 48px 32px 80px;
+}
+
+/* SECTION */
+.section {
+  margin-bottom: 56px;
+  padding-bottom: 56px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.section:last-child { border-bottom: none; }
+
+.section-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-label::before {
+  content: '';
+  display: inline-block;
+  width: 24px;
+  height: 1px;
+  background: var(--accent);
+}
+
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+
+.lead {
+  font-size: 16px;
+  line-height: 1.9;
+  color: var(--muted);
+  border-left: 3px solid var(--accent);
+  padding-left: 20px;
+  margin-bottom: 24px;
+  font-style: italic;
+}
+
+p { margin-bottom: 16px; color: #3a2e1e; line-height: 1.85; }
+
+h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 28px 0 12px;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 8px;
+}
+
+h4 {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--accent2);
+  text-transform: uppercase;
+  margin: 20px 0 8px;
+}
+
+/* COMPETITOR TABLE */
+.comp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin: 24px 0;
+}
+
+.comp-table th {
+  background: var(--ink);
+  color: var(--paper);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 400;
+}
+
+.comp-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+  line-height: 1.6;
+}
+
+.comp-table tr:nth-child(even) td { background: rgba(26,18,8,0.03); }
+
+.comp-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.comp-type {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.tag {
+  display: inline-block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  border: 1px solid;
+  margin: 2px 2px 2px 0;
+}
+
+.tag-red { border-color: var(--accent); color: var(--accent); background: var(--tag-bg); }
+.tag-blue { border-color: var(--accent2); color: var(--accent2); background: rgba(26,92,138,0.08); }
+.tag-gold { border-color: var(--gold); color: var(--gold); background: rgba(184,146,10,0.08); }
+.tag-gray { border-color: var(--muted); color: var(--muted); }
+
+.weakness { color: var(--accent); font-size: 12px; }
+.strength { color: #2a7a3a; font-size: 12px; }
+
+/* MATRIX */
+.matrix {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.matrix-cell {
+  background: var(--paper2);
+  border: 1px solid var(--rule);
+  padding: 20px;
+  position: relative;
+}
+
+.matrix-cell.highlight {
+  background: rgba(200,64,26,0.04);
+  border-color: var(--accent);
+}
+
+.matrix-header {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.matrix-cell.highlight .matrix-header { color: var(--accent); }
+
+.matrix-body { font-size: 13px; line-height: 1.7; color: #3a2e1e; }
+
+/* FEATURE LIST */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.feature-card {
+  border: 1px solid var(--rule);
+  padding: 20px;
+  background: var(--paper);
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--accent);
+}
+
+.feature-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 36px;
+  font-weight: 900;
+  color: rgba(200,64,26,0.12);
+  line-height: 1;
+  margin-bottom: -8px;
+}
+
+.feature-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.feature-desc { font-size: 13px; line-height: 1.7; color: var(--muted); }
+
+/* ARCH DIAGRAM */
+.arch-flow {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 32px;
+  margin: 24px 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  line-height: 1.8;
+  position: relative;
+  overflow-x: auto;
+}
+
+.arch-flow pre {
+  white-space: pre;
+  color: rgba(245,240,232,0.8);
+}
+
+.arch-highlight { color: #ff8c5a; }
+.arch-dim { color: rgba(245,240,232,0.3); }
+.arch-green { color: #5af575; }
+.arch-blue { color: #5aabf5; }
+
+/* ROADMAP */
+.roadmap {
+  position: relative;
+  padding-left: 24px;
+  margin: 24px 0;
+}
+
+.roadmap::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--rule);
+}
+
+.roadmap-item {
+  position: relative;
+  margin-bottom: 28px;
+}
+
+.roadmap-item::before {
+  content: '';
+  position: absolute;
+  left: -22px;
+  top: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 2px solid var(--accent);
+}
+
+.roadmap-item.done::before { background: var(--accent); }
+
+.roadmap-phase {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.roadmap-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.roadmap-items { font-size: 13px; color: var(--muted); line-height: 1.7; }
+
+/* SIDEBAR */
+.sidebar-card {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.sidebar-card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  color: var(--paper);
+  border-bottom: 1px solid rgba(245,240,232,0.15);
+  padding-bottom: 10px;
+}
+
+.sidebar-card-body { font-size: 12px; color: rgba(245,240,232,0.7); line-height: 1.8; }
+
+.sidebar-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.stat-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.stat-label { font-size: 11px; color: rgba(245,240,232,0.5); font-family: 'IBM Plex Mono'; }
+
+.sidebar-quote {
+  background: var(--paper2);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--gold);
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.sidebar-quote cite {
+  display: block;
+  font-style: normal;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--gold);
+  margin-top: 8px;
+}
+
+.sidebar-section-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule);
+}
+
+/* SCORING TABLE */
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.score-label { color: var(--ink); flex: 1; }
+.score-bar-wrap { width: 60px; height: 4px; background: var(--rule); }
+.score-bar-fill { height: 100%; background: var(--accent); }
+.score-val { font-family: 'IBM Plex Mono'; font-size: 11px; color: var(--muted); min-width: 28px; text-align: right; }
+
+/* PULLQUOTE */
+.pullquote {
+  border-top: 3px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+  padding: 20px 0;
+  margin: 32px 0;
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+/* MOAT LIST */
+.moat-list {
+  list-style: none;
+  margin: 16px 0;
+}
+
+.moat-list li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 14px;
+  color: #3a2e1e;
+}
+
+.moat-list li::before {
+  content: '◆';
+  color: var(--accent);
+  font-size: 8px;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+/* BUSINESS MODEL */
+.biz-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  margin: 24px 0;
+}
+
+.biz-cell {
+  background: var(--paper);
+  padding: 20px;
+}
+
+.biz-tier {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.biz-price {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--ink);
+  line-height: 1;
+  margin-bottom: 10px;
+}
+
+.biz-price span { font-size: 14px; color: var(--muted); }
+
+.biz-features { font-size: 12px; color: var(--muted); line-height: 1.8; }
+
+/* RISK */
+.risk-item {
+  display: grid;
+  grid-template-columns: 80px 1fr 80px;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 13px;
+}
+
+.risk-level {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  text-align: center;
+}
+
+.risk-high { background: rgba(200,64,26,0.12); color: var(--accent); }
+.risk-mid { background: rgba(184,146,10,0.12); color: var(--gold); }
+.risk-low { background: rgba(42,122,58,0.1); color: #2a7a3a; }
+
+.risk-counter { font-size: 11px; color: var(--muted); font-style: italic; }
+
+/* PRINT */
+@media print {
+  .toc-bar { display: none; }
+  body { font-size: 11pt; }
+}
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .main-col { padding: 32px 24px; }
+  .side-col { padding: 24px; border-top: 2px solid var(--rule); }
+  .matrix, .feature-grid, .biz-grid { grid-template-columns: 1fr; }
+  .brand-name { font-size: 48px; }
+  .comp-table { font-size: 11px; }
+}
+</style>
+</head>
+<body>
+
+<!-- MASTHEAD -->
+<div class="masthead">
+  <div class="masthead-top">
+    <span>INTERNAL DOCUMENT · CONFIDENTIAL</span>
+    <span>ZHIPU AI INNOVATION BD · APRIL 2026</span>
+  </div>
+  <div class="masthead-title">
+    <div class="brand-name">SIGNAL<span>.</span>FM</div>
+    <div class="brand-tagline">AI-Powered Domain Radio · Product Requirements Document v1.0</div>
+  </div>
+  <div class="masthead-meta">
+    <span>文档版本: PRD v1.0</span>
+    <span>负责人: 智谱 AI 创新业务</span>
+    <span>目标市场: B2B 企业订阅 + B2C 知识工作者</span>
+    <span>定位: 垂直领域实时智能广播系统</span>
+  </div>
+</div>
+
+<!-- TOC -->
+<nav class="toc-bar">
+  <a class="toc-link" href="#overview">产品概述</a>
+  <a class="toc-link" href="#market">市场调研</a>
+  <a class="toc-link" href="#competitive">竞品分析</a>
+  <a class="toc-link" href="#positioning">竞争定位</a>
+  <a class="toc-link" href="#features">核心功能</a>
+  <a class="toc-link" href="#arch">技术架构</a>
+  <a class="toc-link" href="#moat">竞争壁垒</a>
+  <a class="toc-link" href="#biz">商业模式</a>
+  <a class="toc-link" href="#roadmap">发布路线</a>
+  <a class="toc-link" href="#risks">风险评估</a>
+</nav>
+
+<div class="layout">
+<div class="main-col">
+
+<!-- ①  OVERVIEW -->
+<section class="section" id="overview">
+  <div class="section-label">Section 01</div>
+  <div class="section-title">产品概述</div>
+
+  <div class="lead">
+    Signal FM 是一个面向垂直领域知识工作者的实时 AI 广播系统。它持续监控目标领域的全网信息流，由 LLM 筛选出真正有价值的内容，实时生成播报稿并合成为音频，以 FM 电台的方式持续播出——无需手动触发，永远在线，永远只播最值得听的那条。
+  </div>
+
+  <p>在信息过载的时代，知识工作者每天花费大量时间在信息筛选上。现有的解决方案要么是"被动推送"（需要你主动打开），要么是"静态生成"（需要你手动上传内容触发）。没有任何一个产品做到了真正意义上的<strong>持续自动播出、实时感知、领域专注</strong>的 AI 电台体验。</p>
+
+  <p>Signal FM 填补这个空白：它是一个永不停歇的 AI 编辑，将全网的噪声压缩成一条精选信息流，用声音送到你耳朵里。</p>
+
+  <div class="pullquote">
+    "不是把内容做成播客，而是把电台这个形态，用 AI 重新发明一遍。"
+  </div>
+
+  <h3>产品核心价值主张</h3>
+
+  <div class="matrix">
+    <div class="matrix-cell highlight">
+      <div class="matrix-header">For 个人用户</div>
+      <div class="matrix-body">开车、健身、做家务时，背景中持续播出你所在领域今天最重要的信息，不用看屏幕，不用手动操作。</div>
+    </div>
+    <div class="matrix-cell highlight">
+      <div class="matrix-header">For 企业团队</div>
+      <div class="matrix-body">为销售、投研、运营团队订制专属频道，竞品动态、政策变化、行业数据自动播报，团队信息对齐成本为零。</div>
+    </div>
+    <div class="matrix-cell">
+      <div class="matrix-header">核心差异</div>
+      <div class="matrix-body">实时性 × 自动性 × 垂直性。不是"生成播客"，是"永久在线的领域电台"。</div>
+    </div>
+    <div class="matrix-cell">
+      <div class="matrix-header">技术底座</div>
+      <div class="matrix-body">GLM 系列模型驱动评分 + 生成，CosyVoice 音色合成，全链路国产化，可私有化部署。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ②  MARKET -->
+<section class="section" id="market">
+  <div class="section-label">Section 02</div>
+  <div class="section-title">市场背景与机会</div>
+
+  <p>音频内容消费正在经历一次由 AI 驱动的结构性转变。根据 Edison Research 调查，播客月活用户已超过 1.35 亿（美国），全球在线音频市场规模预计 2026 年达到 380 亿美元。但更重要的趋势，是 AI 生成音频内容的崛起。</p>
+
+  <h3>三个正在发生的结构性变化</h3>
+
+  <h4>变化一：音频消费从"娱乐"向"效率"迁移</h4>
+  <p>播客最初以娱乐、访谈为主。2024 年以来，"每日简报"类、"领域速报"类内容增速超过传统访谈类。用户不再只在闲暇时听播客——他们希望在工作场景的碎片时间吸收专业信息。</p>
+
+  <h4>变化二：AI 生成音频从"工具辅助"走向"全自动生成"</h4>
+  <p>NotebookLM 的 Audio Overview 功能让数以百万计的用户第一次体验到"上传文件 → 自动生成对话播客"。根据 Google 官方数据，人们已生成累计超过 350 年时长的 Audio Overview。但这类产品仍需用户主动上传触发，没有做到"持续自动"。</p>
+
+  <h4>变化三：企业对"信息对齐"的需求从未如此迫切</h4>
+  <p>在快速变化的行业中（AI、金融、跨境电商、制造），团队信息不对称是效率杀手。传统解决方案是内部newsletter、周会同步——效率低、覆盖滞后。一个能实时播报竞品和行业动态的"企业专属电台"，是一个未被满足的真实需求。</p>
+
+  <h3>中国市场的特殊机会</h3>
+  <p>在中国，喜马拉雅虽然月活超过 2.68 亿，但其 AI 化程度仍停留在 TTS 朗读层面，没有真正的 AI 编辑和价值过滤能力。国产 LLM 的快速成熟（GLM、Qwen 系列）使得打造全中文、可私有化的领域电台在技术上完全可行，且成本极低。
+  </p>
+</section>
+
+<!-- ③  COMPETITIVE -->
+<section class="section" id="competitive">
+  <div class="section-label">Section 03</div>
+  <div class="section-title">竞品全景分析</div>
+
+  <p>通过系统调研，全球现有产品可分为四个象限：静态 vs 实时、通用 vs 垂直。Signal FM 的目标是唯一占据"实时 × 垂直"象限的产品。</p>
+
+  <table class="comp-table">
+    <thead>
+      <tr>
+        <th>产品</th>
+        <th>核心模式</th>
+        <th>关键能力</th>
+        <th>致命弱点</th>
+        <th>定位</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <div class="comp-name">Google NotebookLM</div>
+          <div class="comp-type">Audio Overview · 静态生成</div>
+        </td>
+        <td>用户上传文档 → 生成 AI 双主播对话</td>
+        <td>
+          <span class="tag tag-blue">音质最佳</span>
+          <span class="tag tag-blue">Google 生态</span>
+          <span class="tag tag-blue">免费</span>
+        </td>
+        <td class="weakness">⚠ 必须手动上传内容<br>⚠ 无实时抓取能力<br>⚠ 无价值评分过滤<br>⚠ 生成一次即结束，非持续播出</td>
+        <td><span class="tag tag-gray">个人研究助手</span></td>
+      </tr>
+      <tr>
+        <td>
+          <div class="comp-name">ElevenLabs GenFM</div>
+          <div class="comp-type">On-demand · 单篇生成</div>
+        </td>
+        <td>用户粘贴 URL/文本 → AI 双主播播客</td>
+        <td>
+          <span class="tag tag-blue">音质极佳</span>
+          <span class="tag tag-blue">32语言</span>
+          <span class="tag tag-blue">秒级生成</span>
+        </td>
+        <td class="weakness">⚠ 完全依赖用户手动触发<br>⚠ 每次处理单一来源<br>⚠ 无持续监控能力<br>⚠ 无领域编辑逻辑</td>
+        <td><span class="tag tag-gray">内容消费工具</span></td>
+      </tr>
+      <tr>
+        <td>
+          <div class="comp-name">华盛顿邮报 Personal Podcast</div>
+          <div class="comp-type">媒体定制 · 封闭内容</div>
+        </td>
+        <td>基于阅读历史自动生成日报播客</td>
+        <td>
+          <span class="tag tag-blue">个性化</span>
+          <span class="tag tag-blue">有编辑背书</span>
+        </td>
+        <td class="weakness">⚠ 仅限 WaPo 自有内容<br>⚠ 已报出幻觉/错误引用问题<br>⚠ 不开放、不可定制<br>⚠ 非实时，按天生成</td>
+        <td><span class="tag tag-gray">媒体订阅产品</span></td>
+      </tr>
+      <tr>
+        <td>
+          <div class="comp-name">麦悠电台</div>
+          <div class="comp-type">中国 · RSS→播客 工具</div>
+        </td>
+        <td>用户配置 RSS → TTS 朗读 / AI 改写</td>
+        <td>
+          <span class="tag tag-blue">中文优化</span>
+          <span class="tag tag-blue">RSS 支持</span>
+          <span class="tag tag-blue">本地 TTS</span>
+        </td>
+        <td class="weakness">⚠ 无 AI 价值评分和过滤<br>⚠ 全量朗读，无编辑选择<br>⚠ 独立开发者产品，稳定性存疑<br>⚠ 无企业级能力</td>
+        <td><span class="tag tag-gray">个人效率工具</span></td>
+      </tr>
+      <tr>
+        <td>
+          <div class="comp-name">喜马拉雅 AI 主播</div>
+          <div class="comp-type">中国 · 平台级 TTS</div>
+        </td>
+        <td>内容平台 + TTS 朗读 + AIGC 故事</td>
+        <td>
+          <span class="tag tag-blue">用户规模巨大</span>
+          <span class="tag tag-blue">版权内容</span>
+        </td>
+        <td class="weakness">⚠ TTS 朗读为主，无 AI 编辑<br>⚠ 无实时新闻能力<br>⚠ 通用娱乐定位，非垂直专业</td>
+        <td><span class="tag tag-gray">泛娱乐音频平台</span></td>
+      </tr>
+      <tr>
+        <td>
+          <div class="comp-name">BBC My Club Daily</div>
+          <div class="comp-type">垂直领域 · 体育</div>
+        </td>
+        <td>AI 生成球队专属播客</td>
+        <td>
+          <span class="tag tag-blue">垂直聚焦</span>
+          <span class="tag tag-blue">媒体品牌</span>
+        </td>
+        <td class="weakness">⚠ 单一垂直（体育），无法扩展<br>⚠ 非实时，无通用框架</td>
+        <td><span class="tag tag-gray">媒体功能实验</span></td>
+      </tr>
+      <tr style="background: rgba(200,64,26,0.04);">
+        <td>
+          <div class="comp-name" style="color: var(--accent)">▶ Signal FM</div>
+          <div class="comp-type" style="color: var(--accent)">目标产品</div>
+        </td>
+        <td>全自动监控 → AI 筛选 → 实时播出</td>
+        <td>
+          <span class="tag tag-red">持续实时</span>
+          <span class="tag tag-red">AI 价值评分</span>
+          <span class="tag tag-red">垂直可配</span>
+          <span class="tag tag-red">企业私有化</span>
+        </td>
+        <td class="strength">✓ 唯一"永不停歇"的自动 AI 电台<br>✓ 唯一内置内容价值过滤引擎<br>✓ 唯一支持企业私有部署</td>
+        <td><span class="tag tag-red">垂直实时 AI 电台</span></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ④  POSITIONING -->
+<section class="section" id="positioning">
+  <div class="section-label">Section 04</div>
+  <div class="section-title">竞争定位与差异化战略</div>
+
+  <div class="lead">
+    所有竞品都在做"把内容变成播客"。Signal FM 做的是"把电台这个持续广播的形态，用 AI 重新实现"。这是一个本质不同的产品哲学。
+  </div>
+
+  <h3>四维差异化矩阵</h3>
+
+  <div class="matrix">
+    <div class="matrix-cell highlight">
+      <div class="matrix-header">差异点 1 · 持续性</div>
+      <div class="matrix-body"><strong>竞品：</strong>触发式，用户操作一次，生成一次。<br><br><strong>Signal FM：</strong>永续运行。就像真正的电台——没有人在打开它之前它就已经在播了。</div>
+    </div>
+    <div class="matrix-cell highlight">
+      <div class="matrix-header">差异点 2 · 智能筛选</div>
+      <div class="matrix-body"><strong>竞品：</strong>朗读/改写用户给的所有内容，无质量过滤。<br><br><strong>Signal FM：</strong>LLM 对每条内容评分，只有高价值内容才能"上播"，过滤掉 80% 噪声。</div>
+    </div>
+    <div class="matrix-cell highlight">
+      <div class="matrix-header">差异点 3 · 实时抓取</div>
+      <div class="matrix-body"><strong>竞品：</strong>依赖用户手动提供内容，没有主动获取能力。<br><br><strong>Signal FM：</strong>自主爬取 RSS、API、网页，无需用户参与，内容自动流入。</div>
+    </div>
+    <div class="matrix-cell highlight">
+      <div class="matrix-header">差异点 4 · 企业级</div>
+      <div class="matrix-body"><strong>竞品：</strong>面向个人，无私有化方案，数据安全存疑。<br><br><strong>Signal FM：</strong>支持私有化部署，B2B 订制频道，适合金融/制造/投研等敏感行业。</div>
+    </div>
+  </div>
+
+  <h3>目标用户画像</h3>
+
+  <h4>主力用户 A · 高强度信息消费者</h4>
+  <p>投研分析师、AI 产品经理、跨境电商运营、科技记者。特征：每天需要追踪某个领域 20+ 个来源，信息密度极高，时间极度稀缺。场景：通勤、运动、吃饭时用耳朵"刷"领域资讯。</p>
+
+  <h4>主力用户 B · 企业知识团队</h4>
+  <p>销售情报团队、竞品分析团队、投资机构研究部门。特征：需要全团队对竞品动态、政策变化保持实时认知同步。场景：办公室"背景广播"，会议室开场情报简报。</p>
+
+  <h4>次级用户 C · 内容创作者</h4>
+  <p>Newsletter 作者、播客主持人、行业 KOL。用途：用 Signal FM 替代人工 RSS 监控，快速发现值得深度报道的选题。</p>
+</section>
+
+<!-- ⑤  FEATURES -->
+<section class="section" id="features">
+  <div class="section-label">Section 05</div>
+  <div class="section-title">核心功能规格</div>
+
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-num">01</div>
+      <div class="feature-title">频道编辑器</div>
+      <div class="feature-desc">可视化配置数据源（RSS / API / 关键词爬虫）、领域关键词、过滤规则、播报语气风格。支持多频道并行，每个频道独立运行。</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-num">02</div>
+      <div class="feature-title">智能评分引擎</div>
+      <div class="feature-desc">基于 GLM-4-Flash 的四维评分系统（新颖性/重要性/领域匹配/时效性），阈值可调。同类内容自动去重，防止洗稿内容入队。</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-num">03</div>
+      <div class="feature-title">AI 播报脚本生成</div>
+      <div class="feature-desc">用 GLM-4 将原文改写为主播口语稿，支持多种播报风格（严肃简报 / 幽默点评 / 深度解读）。插入来源核查提示，降低幻觉风险。</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-num">04</div>
+      <div class="feature-title">多音色 TTS 合成</div>
+      <div class="feature-desc">CosyVoice 本地合成 + 火山引擎/Edge TTS 云端备份。支持自定义音色克隆（企业版），多语言（中/英/粤）切换。</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-num">05</div>
+      <div class="feature-title">播放队列调度</div>
+      <div class="feature-desc">按评分 × 时效性动态排队，高分内容优先插播。支持"插播模式"——出现重大突发事件立即打断当前播报。</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-num">06</div>
+      <div class="feature-title">多端接入</div>
+      <div class="feature-desc">Web 播放器 / HLS 推流（可接入智能音箱）/ RSS 音频订阅 / 飞书/企微机器人推送（含文字摘要）。</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-num">07</div>
+      <div class="feature-title">对话式追问</div>
+      <div class="feature-desc">听完某条新闻后，可通过语音或文字追问"这件事背景是什么""对我们公司有什么影响"，AI 实时回答。（Roadmap Q3）</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-num">08</div>
+      <div class="feature-title">企业私有化部署</div>
+      <div class="feature-desc">完整 Docker 化，支持内网部署。内部知识库接入（企业 Wiki / 飞书文档），可播报内部文件摘要。合规审计日志。</div>
+    </div>
+  </div>
+
+  <h3>差异化亮点功能详述</h3>
+
+  <h4>🎯 内容价值评分系统（核心护城河）</h4>
+  <p>这是 Signal FM 最关键的差异化功能。每条进入系统的内容都会经过 LLM 的四维评估，评分低于阈值的内容直接丢弃，不进入播放队列。评分系统可以理解为一个 24 小时不休息的 AI 编辑，其判断标准由用户通过自然语言描述定义（如"优先播报涉及 GPT-5 / Claude 的突破性进展，淡化纯商业融资新闻"）。</p>
+
+  <h4>⚡ 突发插播机制</h4>
+  <p>系统持续计算"紧急度评分"。当一条新内容紧急度超过阈值，且当前播报内容紧急度较低时，系统在当前句子结束时自动切换，播报紧急内容后回到原队列。这是传统播客工具完全不具备的实时响应能力。</p>
+
+  <h4>🔒 幻觉防控机制</h4>
+  <p>生成脚本时强制注入信源标记（"据 The Verge 报道"），禁止 LLM 补全未在原文出现的数据和引用。针对华盛顿邮报 AI 播客暴露的核心问题（幻觉和错误引用）做专项防御。</p>
+</section>
+
+<!-- ⑥  ARCH -->
+<section class="section" id="arch">
+  <div class="section-label">Section 06</div>
+  <div class="section-title">技术架构</div>
+
+  <div class="arch-flow">
+<pre>
+<span class="arch-highlight">┌─────────────────── SIGNAL FM · SYSTEM ARCHITECTURE ───────────────────┐</span>
+
+<span class="arch-blue">[ LAYER 1 · DATA INGESTION ]</span>
+  RSS Feeds ──┐
+  NewsAPI    ─┼──► <span class="arch-green">Dispatcher</span> ──► <span class="arch-green">Redis Stream</span> ──► <span class="arch-green">URL Dedup Hash</span>
+  Playwright ─┘   (APScheduler)    (Message Queue)    (SHA256)
+
+<span class="arch-blue">[ LAYER 2 · AI INTELLIGENCE ]</span>
+  Redis Stream ──► <span class="arch-green">Score Worker</span>            Score Formula:
+                   │  GLM-4-Flash            novelty(30) + importance(30)
+                   │  ~100ms/item            + relevance(20) + urgency(20)
+                   │                         ─────────────────────────────
+                   ├─[score ≥ 70]──► <span class="arch-green">Script Generator</span> (GLM-4)
+                   │                  │  口语化改写 + SSML 标注
+                   │                  │  幻觉防控注入
+                   └─[score < 70]──► <span class="arch-dim">DISCARD</span>
+
+<span class="arch-blue">[ LAYER 3 · AUDIO SYNTHESIS ]</span>
+  Script ──► <span class="arch-green">TTS Router</span>
+              ├── CosyVoice (本地, 低延迟)
+              └── 火山 TTS (云端备份)
+              ──► <span class="arch-green">Audio Cache</span> (MinIO)
+
+<span class="arch-blue">[ LAYER 4 · BROADCAST ENGINE ]</span>
+  Audio Queue ──► <span class="arch-green">Priority Scheduler</span>
+                   │  score × freshness 排序
+                   │  突发插播检测
+                   ▼
+              <span class="arch-green">FFmpeg Mixer</span> ──► HLS Stream ──► Web Player
+                                └──► RTMP ──── Smart Speaker
+                                └──► RSS ───── Podcast App
+
+<span class="arch-blue">[ LAYER 5 · INTERFACE ]</span>
+  WebSocket ──► Real-time Metadata (title / score / source)
+  REST API  ──► 频道配置 / 播放控制 / 数据看板
+  Bot Push  ──► Feishu / WeCom (文字摘要 + 评分)
+
+<span class="arch-highlight">└────────────────────────────────────────────────────────────────────────┘</span>
+</pre>
+  </div>
+
+  <h3>技术选型说明</h3>
+  <p><strong>为何用 GLM-4-Flash 做评分而不是规则过滤？</strong>规则过滤无法理解"信息价值"的语义——"OpenAI 发布 GPT-5"和"某 AI 公司发布大模型"在关键词层面很难区分，但前者的信息价值远高于后者。LLM 评分的成本极低（每条约 ¥0.001），但质量远超关键词匹配。</p>
+  <p><strong>为何选择 CosyVoice？</strong>CosyVoice 是达摩院开源的 TTS 模型，在中文语音自然度上显著优于 Edge TTS，且支持音色克隆，是企业版"专属主播"功能的基础。本地部署可消除云端 API 的延迟抖动。</p>
+</section>
+
+<!-- ⑦  MOAT -->
+<section class="section" id="moat">
+  <div class="section-label">Section 07</div>
+  <div class="section-title">竞争壁垒与护城河</div>
+
+  <ul class="moat-list">
+    <li>
+      <div>
+        <strong>数据飞轮</strong>：用户对播报内容的反馈（跳过 / 追问 / 收藏）持续优化评分模型。随着使用时间增长，系统对该用户领域的"价值判断"越来越准，形成个人化护城河。
+      </div>
+    </li>
+    <li>
+      <div>
+        <strong>频道知识图谱积累</strong>：系统长期追踪某个领域，会建立该领域的实体关系图（公司、人物、技术术语），使得去重、关联播报、上下文理解能力持续提升。这是新进入者短期内无法复制的。
+      </div>
+    </li>
+    <li>
+      <div>
+        <strong>企业私有化壁垒</strong>：企业部署后，内部知识库、历史播报记录、音色库都在客户侧。迁移成本极高，形成黏性。
+      </div>
+    </li>
+    <li>
+      <div>
+        <strong>GLM 生态绑定</strong>：与智谱 AI 的 GLM 系列深度整合，在模型更新、API 优先级、私有化支持上具备其他产品不具备的优势。企业采购 AI 基础设施时，Signal FM 可作为增值能力打包销售。
+      </div>
+    </li>
+    <li>
+      <div>
+        <strong>评分系统的可解释性设计</strong>：用户可以看到每条内容为什么被播报、每个维度的得分，建立信任感。这是 NotebookLM 和 GenFM 完全不具备的透明度。
+      </div>
+    </li>
+    <li>
+      <div>
+        <strong>先发的品类定义权</strong>：在"垂直领域实时 AI 电台"这个品类，目前没有成熟竞品。先发者有机会定义品类认知，形成用户心智中的标杆。
+      </div>
+    </li>
+  </ul>
+</section>
+
+<!-- ⑧  BIZ MODEL -->
+<section class="section" id="biz">
+  <div class="section-label">Section 08</div>
+  <div class="section-title">商业模式</div>
+
+  <p>Signal FM 采用 B2C 订阅 + B2B 企业授权的双轨模式，以 B2C 建立品牌认知，以 B2B 实现规模盈利。</p>
+
+  <div class="biz-grid">
+    <div class="biz-cell">
+      <div class="biz-tier">Free</div>
+      <div class="biz-price">¥0 <span>/ 月</span></div>
+      <div class="biz-features">
+        · 1 个频道<br>
+        · 预设领域模板（AI / 金融 / 科技）<br>
+        · 每日上限 30 分钟播出<br>
+        · 标准音色<br>
+        · Signal FM 品牌水印<br>
+        · 7 天历史回放
+      </div>
+    </div>
+    <div class="biz-cell" style="background: rgba(200,64,26,0.04); border: 1px solid var(--accent);">
+      <div class="biz-tier" style="color: var(--accent)">Pro · 主力付费层</div>
+      <div class="biz-price">¥49 <span>/ 月</span></div>
+      <div class="biz-features">
+        · 5 个自定义频道<br>
+        · 完全自定义数据源<br>
+        · 无限播出时长<br>
+        · 多音色切换<br>
+        · 飞书 / 企微 Bot 推送<br>
+        · 评分维度自定义<br>
+        · 30 天历史 + 导出音频
+      </div>
+    </div>
+    <div class="biz-cell">
+      <div class="biz-tier">Enterprise</div>
+      <div class="biz-price">定制 <span>/ 年</span></div>
+      <div class="biz-features">
+        · 私有化部署（Docker）<br>
+        · 自定义音色克隆<br>
+        · 内部知识库接入<br>
+        · 无限频道<br>
+        · SSO / RBAC / 审计日志<br>
+        · SLA 保障 + 专属支持<br>
+        · API 开放（二次集成）
+      </div>
+    </div>
+  </div>
+
+  <h3>B2B 场景策略</h3>
+  <p><strong>金融 / 投研</strong>：竞争对手动态、政策监测频道，帮助研究员在晨会前完成信息同步。定价锚定信息终端（Bloomberg 等），具备明显价格优势。</p>
+  <p><strong>制造 / 跨境电商</strong>：供应链风险、关税政策、竞品发布频道。与智谱 AI OpenClaw 体系深度整合，作为 Agent 的"情报广播"层。</p>
+  <p><strong>企业内训 / 知识管理</strong>：将企业内部文档（周报、会议纪要、知识库）转化为员工可收听的内部电台，降低知识传递摩擦。</p>
+</section>
+
+<!-- ⑨  ROADMAP -->
+<section class="section" id="roadmap">
+  <div class="section-label">Section 09</div>
+  <div class="section-title">发布路线图</div>
+
+  <div class="roadmap">
+    <div class="roadmap-item done">
+      <div class="roadmap-phase">MVP · 2026 Q2</div>
+      <div class="roadmap-title">最小可用产品（4 周）</div>
+      <div class="roadmap-items">
+        ✓ RSS + NewsAPI 数据接入<br>
+        ✓ GLM-4-Flash 四维评分<br>
+        ✓ Edge TTS 语音合成<br>
+        ✓ 基础 Web 播放器<br>
+        ✓ 飞书 Bot 文字摘要推送<br>
+        → 目标：内部使用 + 种子用户邀测
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <div class="roadmap-phase">Public Beta · 2026 Q3</div>
+      <div class="roadmap-title">公测版 · 产品打磨</div>
+      <div class="roadmap-items">
+        · CosyVoice 接入，音质提升<br>
+        · 频道编辑器 UI 完善<br>
+        · 突发插播机制上线<br>
+        · 对话式追问（基础版）<br>
+        · Pro 订阅开启<br>
+        → 目标：1,000 付费用户
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <div class="roadmap-phase">GA · 2026 Q4</div>
+      <div class="roadmap-title">正式版 · 企业拓展</div>
+      <div class="roadmap-items">
+        · 私有化部署方案<br>
+        · 企业内部知识库接入<br>
+        · 音色克隆（企业专属主播）<br>
+        · HLS 推流 / 智能音箱接入<br>
+        · API 开放<br>
+        → 目标：首批 10 家企业客户
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <div class="roadmap-phase">V2 · 2027 Q1</div>
+      <div class="roadmap-title">智能升级 · 数据飞轮</div>
+      <div class="roadmap-items">
+        · 用户反馈闭环优化评分模型<br>
+        · 多语言频道（英 / 粤 / 日）<br>
+        · 多主播双人对话格式<br>
+        · 频道市场（用户分享频道配置）<br>
+        → 目标：平台化生态初步建立
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ⑩  RISKS -->
+<section class="section" id="risks">
+  <div class="section-label">Section 10</div>
+  <div class="section-title">风险评估与应对</div>
+
+  <div class="risk-item" style="font-weight: 600; font-family: 'IBM Plex Mono'; font-size: 10px; letter-spacing: 1px; color: var(--muted); border-bottom: 2px solid var(--ink);">
+    <div>风险等级</div>
+    <div>风险描述</div>
+    <div>应对策略</div>
+  </div>
+
+  <div class="risk-item">
+    <div class="risk-level risk-high">HIGH</div>
+    <div><strong>LLM 幻觉风险</strong><br>AI 生成播报稿可能引入错误信息，损害产品公信力</div>
+    <div class="risk-counter">强制信源归因 + 生成时禁止补全非原文数据 + 用户可一键查看原文</div>
+  </div>
+  <div class="risk-item">
+    <div class="risk-level risk-high">HIGH</div>
+    <div><strong>版权与爬虫合规</strong><br>部分新闻网站禁止爬取，可能面临法律风险</div>
+    <div class="risk-counter">优先接入合法 RSS/API 授权源；爬虫严格遵循 robots.txt；明确标注内容来源</div>
+  </div>
+  <div class="risk-item">
+    <div class="risk-level risk-mid">MID</div>
+    <div><strong>Google/ElevenLabs 跟进</strong><br>NotebookLM 或 GenFM 增加自动抓取功能</div>
+    <div class="risk-counter">深耕中文垂直市场 + 企业私有化 + 数据飞轮差距，先发优势可维持 12-18 个月</div>
+  </div>
+  <div class="risk-item">
+    <div class="risk-level risk-mid">MID</div>
+    <div><strong>API 成本控制</strong><br>高频调用 LLM 评分 + TTS 合成，成本可能超预期</div>
+    <div class="risk-counter">评分用 Flash 模型（成本极低）；TTS 优先本地 CosyVoice；音频文件缓存避免重复合成</div>
+  </div>
+  <div class="risk-item">
+    <div class="risk-level risk-low">LOW</div>
+    <div><strong>用户教育成本</strong><br>"AI 电台"是新品类，用户理解和接受需要时间</div>
+    <div class="risk-counter">从熟悉场景切入（飞书 Bot 推送）→ 引导到完整电台体验，降低认知门槛</div>
+  </div>
+</section>
+
+</div>
+
+<!-- SIDEBAR -->
+<aside class="side-col">
+
+  <div class="sidebar-card">
+    <div class="sidebar-card-title">市场数据</div>
+    <div class="sidebar-stat">
+      <div class="stat-num">350+</div>
+      <div class="stat-label">年 · NotebookLM Audio 累计生成时长</div>
+    </div>
+    <div class="sidebar-stat">
+      <div class="stat-num">68%</div>
+      <div class="stat-label">喜马拉雅在线音频行业收听时长占比</div>
+    </div>
+    <div class="sidebar-stat">
+      <div class="stat-num">40%</div>
+      <div class="stat-label">AI 工具可降低广播制作成本</div>
+    </div>
+    <div class="sidebar-stat">
+      <div class="stat-num">3000+</div>
+      <div class="stat-label">部分 AI 公司每周 AI 播客生成量</div>
+    </div>
+  </div>
+
+  <div class="sidebar-quote">
+    "AI-based news personalization tends to land firmly in the camp of delivering audiences what they want to know."
+    <cite>— Andrew Deck, Harvard Nieman Lab</cite>
+  </div>
+
+  <div class="sidebar-quote">
+    "The automation of it kind of erases the entire voice performance industry... people who do this for a living could produce higher quality versions."
+    <cite>— Nicholas Quah, Vulture / NYMag</cite>
+  </div>
+
+  <div class="sidebar-section-title">竞品能力评分对比</div>
+
+  <p style="font-size:11px; color: var(--muted); margin-bottom:12px; font-family:'IBM Plex Mono'">Signal FM vs 主要竞品</p>
+
+  <div style="margin-bottom: 20px;">
+    <div style="font-family:'IBM Plex Mono'; font-size:10px; color:var(--muted); margin-bottom:8px; letter-spacing:1px">NOTEBOOKLM</div>
+    <div class="score-row"><span class="score-label">音频质量</span><div class="score-bar-wrap"><div class="score-bar-fill" style="width:95%"></div></div><span class="score-val">95</span></div>
+    <div class="score-row"><span class="score-label">实时性</span><div class="score-bar-wrap"><div class="score-bar-fill" style="width:0%"></div></div><span class="score-val">0</span></div>
+    <div class="score-row"><span class="score-label">自动化</span><div class="score-bar-wrap"><div class="score-bar-fill" style="width:10%"></div></div><span class="score-val">10</span></div>
+    <div class="score-row"><span class="score-label">企业能力</span><div class="score-bar-wrap"><div class="score-bar-fill" style="width:40%"></div></div><span class="score-val">40</span></div>
+  </div>
+
+  <div style="margin-bottom: 20px;">
+    <div style="font-family:'IBM Plex Mono'; font-size:10px; color:var(--muted); margin-bottom:8px; letter-spacing:1px">ELEVENLABS GENFM</div>
+    <div class="score-row"><span class="score-label">音频质量</span><div class="score-bar-wrap"><div class="score-bar-fill" style="width:90%"></div></div><span class="score-val">90</span></div>
+    <div class="score-row"><span class="score-label">实时性</span><div class="score-bar-wrap"><div class="score-bar-fill" style="width:5%"></div></div><span class="score-val">5</span></div>
+    <div class="score-row"><span class="score-label">自动化</span><div class="score-bar-wrap"><div class="score-bar-fill" style="width:5%"></div></div><span class="score-val">5</span></div>
+    <div class="score-row"><span class="score-label">企业能力</span><div class="score-bar-wrap"><div class="score-bar-fill" style="width:20%"></div></div><span class="score-val">20</span></div>
+  </div>
+
+  <div style="margin-bottom: 20px;">
+    <div style="font-family:'IBM Plex Mono'; font-size:10px; color:var(--muted); margin-bottom:8px; letter-spacing:1px">麦悠电台</div>
+    <div class="score-row"><span class="score-label">音频质量</span><div class="score-bar-wrap"><div class="score-bar-fill" style="width:55%"></div></div><span class="score-val">55</span></div>
+    <div class="score-row"><span class="score-label">实时性</span><div class="score-bar-wrap"><div class="score-bar-fill" style="width:60%"></div></div><span class="score-val">60</span></div>
+    <div class="score-row"><span class="score-label">自动化</span><div class="score-bar-wrap"><div class="score-bar-fill" style="width:50%"></div></div><span class="score-val">50</span></div>
+    <div class="score-row"><span class="score-label">企业能力</span><div class="score-bar-wrap"><div class="score-bar-fill" style="width:10%"></div></div><span class="score-val">10</span></div>
+  </div>
+
+  <div style="margin-bottom: 20px; background: rgba(200,64,26,0.04); border: 1px solid var(--accent); padding: 12px;">
+    <div style="font-family:'IBM Plex Mono'; font-size:10px; color:var(--accent); margin-bottom:8px; letter-spacing:1px">▶ SIGNAL FM (目标)</div>
+    <div class="score-row"><span class="score-label">音频质量</span><div class="score-bar-wrap"><div class="score-bar-fill" style="width:80%"></div></div><span class="score-val">80</span></div>
+    <div class="score-row"><span class="score-label">实时性</span><div class="score-bar-wrap"><div class="score-bar-fill" style="width:95%"></div></div><span class="score-val">95</span></div>
+    <div class="score-row"><span class="score-label">自动化</span><div class="score-bar-wrap"><div class="score-bar-fill" style="width:95%"></div></div><span class="score-val">95</span></div>
+    <div class="score-row"><span class="score-label">企业能力</span><div class="score-bar-wrap"><div class="score-bar-fill" style="width:85%"></div></div><span class="score-val">85</span></div>
+  </div>
+
+  <div class="sidebar-card" style="background: var(--accent2);">
+    <div class="sidebar-card-title">核心判断</div>
+    <div class="sidebar-card-body">
+      现有竞品都在做"把内容变成播客"，本质是内容消费工具。<br><br>Signal FM 做的是"永不停歇的 AI 编辑 + 电台"，本质是信息基础设施。<br><br>这是两个不同的产品哲学，决定了在用户心智中的完全不同位置。
+    </div>
+  </div>
+
+  <div style="margin-top: 24px;">
+    <div class="sidebar-section-title">关键成功指标 KPI</div>
+    <div style="font-size: 12px; color: var(--muted); line-height: 1.9;">
+      <strong>MVP 阶段</strong><br>
+      · 种子用户 200 人<br>
+      · 日均收听 > 15 分钟<br>
+      · 7 日留存 > 40%<br><br>
+      <strong>Public Beta</strong><br>
+      · Pro 付费转化 > 8%<br>
+      · 月流失率 < 5%<br>
+      · NPS > 50<br><br>
+      <strong>GA 阶段</strong><br>
+      · ARR ¥300 万<br>
+      · 企业客户 10 家<br>
+      · 每频道日均播出 > 60 分钟
+    </div>
+  </div>
+
+</aside>
+</div>
+
+</body>
+</html>
