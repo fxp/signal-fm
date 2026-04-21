@@ -7,6 +7,7 @@ class ChannelCreate(BaseModel):
     topic: str
     rss_feeds: list[str] = []
     keywords: list[str] = []
+    crawl_urls: list[str] = []
     preference: str = ""
     style: str = "formal"
     interval_minutes: int = 15
@@ -18,6 +19,7 @@ class ChannelResponse(BaseModel):
     topic: str
     rss_feeds: list[str]
     keywords: list[str]
+    crawl_urls: list[str] = []
     preference: str
     style: str
     interval_minutes: int

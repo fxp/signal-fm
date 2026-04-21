@@ -11,6 +11,7 @@ import redis.asyncio as redis
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from .fetcher import NewsAPIFetcher, RSSFetcher, RawItem, URLDedup
+from .crawler import PlaywrightCrawler, CrawledItem
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,7 @@ class Dispatcher:
         self.dedup = URLDedup(redis_client)
         self.rss_fetcher = RSSFetcher()
         self.news_fetcher = NewsAPIFetcher(newsapi_key) if newsapi_key else None
+        self.crawler = PlaywrightCrawler(headless=True)
         self.scheduler = AsyncIOScheduler()
 
     def register_channel(self, channel: dict[str, Any]):
@@ -50,8 +52,19 @@ class Dispatcher:
                     args=[keyword, channel_id],
                     id=f"news:{channel_id}:{keyword}",
                     replace_existing=True,
-                    next_run_time=__import__("datetime").datetime.now(),
+                    next_run_time=datetime.now(),
                 )
+
+        for crawl_url in channel.get("crawl_urls", []):
+            self.scheduler.add_job(
+                self._crawl_site,
+                "interval",
+                minutes=max(interval_minutes, 30),  # crawl less frequently
+                args=[crawl_url, channel_id],
+                id=f"crawl:{channel_id}:{crawl_url}",
+                replace_existing=True,
+                next_run_time=datetime.now(),
+            )
 
     async def _fetch_rss(self, feed_url: str, channel_id: str):
         async for item in self.rss_fetcher.fetch(feed_url, channel_id):
@@ -60,6 +73,18 @@ class Dispatcher:
     async def _fetch_news(self, keyword: str, channel_id: str):
         async for item in self.news_fetcher.fetch(keyword, channel_id):
             await self._push(item)
+
+    async def _crawl_site(self, crawl_url: str, channel_id: str):
+        async for item in self.crawler.crawl_site(crawl_url, channel_id):
+            raw = RawItem(
+                url=item.url,
+                title=item.title,
+                content=item.content,
+                source=item.source,
+                published_at=item.published_at,
+                channel_id=channel_id,
+            )
+            await self._push(raw)
 
     async def _push(self, item: RawItem):
         if not item.url or not item.title:

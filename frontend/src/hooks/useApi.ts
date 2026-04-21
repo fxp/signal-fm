@@ -8,6 +8,7 @@ export interface Channel {
   topic: string;
   rss_feeds: string[];
   keywords: string[];
+  crawl_urls: string[];
   preference: string;
   style: string;
   interval_minutes: number;

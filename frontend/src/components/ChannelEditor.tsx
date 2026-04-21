@@ -21,6 +21,7 @@ export default function ChannelEditor({ channels, onCreate, onDelete }: Props) {
     topic: "",
     rss_feeds: "",
     keywords: "",
+    crawl_urls: "",
     preference: "",
     style: "formal",
     interval_minutes: 15,
@@ -35,12 +36,13 @@ export default function ChannelEditor({ channels, onCreate, onDelete }: Props) {
         topic: form.topic,
         rss_feeds: form.rss_feeds.split("\n").map((s) => s.trim()).filter(Boolean),
         keywords: form.keywords.split(",").map((s) => s.trim()).filter(Boolean),
+        crawl_urls: form.crawl_urls.split("\n").map((s) => s.trim()).filter(Boolean),
         preference: form.preference,
         style: form.style,
         interval_minutes: form.interval_minutes,
       });
       setShowForm(false);
-      setForm({ name: "", topic: "", rss_feeds: "", keywords: "", preference: "", style: "formal", interval_minutes: 15 });
+      setForm({ name: "", topic: "", rss_feeds: "", keywords: "", crawl_urls: "", preference: "", style: "formal", interval_minutes: 15 });
     } finally {
       setSubmitting(false);
     }
@@ -68,6 +70,9 @@ export default function ChannelEditor({ channels, onCreate, onDelete }: Props) {
           </Field>
           <Field label="关键词（逗号分隔）">
             <input style={styles.input} value={form.keywords} onChange={(e) => setForm({ ...form, keywords: e.target.value })} placeholder="GPT-5, Claude, 大模型" />
+          </Field>
+          <Field label="爬虫网址（每行一个，无 RSS 的站点）">
+            <textarea style={{ ...styles.input, height: 56 }} value={form.crawl_urls} onChange={(e) => setForm({ ...form, crawl_urls: e.target.value })} placeholder="https://venturebeat.com/ai/" />
           </Field>
           <Field label="播报偏好（自然语言描述）">
             <textarea style={{ ...styles.input, height: 60 }} value={form.preference} onChange={(e) => setForm({ ...form, preference: e.target.value })} placeholder="优先播报 GPT/Claude 的突破进展，淡化纯融资新闻" />
