@@ -31,6 +31,7 @@ class NowPlayingResponse(BaseModel):
     score_reason: Optional[str] = None
     url: Optional[str] = None
     channel_id: Optional[str] = None
+    audio_url: Optional[str] = None
 
 
 class QueueItem(BaseModel):

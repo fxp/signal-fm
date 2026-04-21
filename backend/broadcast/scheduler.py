@@ -41,6 +41,7 @@ class BroadcastScheduler:
         self._interrupt = asyncio.Event()
         self._running = False
         self._listeners: list[asyncio.Queue] = []  # WebSocket metadata subscribers
+        self._history: list[dict] = []  # last 50 played items
 
     def subscribe(self) -> asyncio.Queue:
         q: asyncio.Queue = asyncio.Queue(maxsize=10)
@@ -158,13 +159,24 @@ class BroadcastScheduler:
             logger.info(f"[broadcast] playing ({duration:.1f}s): {item.title[:50]}")
 
             # Simulate playback with interrupt support
+            interrupted = False
             try:
                 await asyncio.wait_for(self._interrupt.wait(), timeout=duration)
-                # Interrupted — re-queue current item if it has high enough score
-                if self._current and self._current.score >= 60:
-                    self.enqueue(self._current)
+                interrupted = True
             except asyncio.TimeoutError:
                 pass  # finished normally
+
+            # Record in history (keep last 50)
+            self._history.append({
+                "title": item.title,
+                "source": item.source,
+                "score": item.score,
+                "url": item.url,
+                "channel_id": item.channel_id,
+                "audio_url": f"/api/audio/{audio_path.name}",
+            })
+            if len(self._history) > 50:
+                self._history.pop(0)
 
             self._current = None
 

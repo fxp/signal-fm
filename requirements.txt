@@ -8,3 +8,5 @@ edge-tts==6.1.12
 zhipuai==2.1.5.20250825
 pydantic==2.8.2
 python-multipart==0.0.9
+python-dotenv==1.0.1
+websockets==13.1

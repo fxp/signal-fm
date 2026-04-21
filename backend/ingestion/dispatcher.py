@@ -4,6 +4,7 @@ Dispatcher: schedules fetchers and pushes new items into Redis Stream.
 import json
 import logging
 from dataclasses import asdict
+from datetime import datetime
 from typing import Any
 
 import redis.asyncio as redis
@@ -37,7 +38,7 @@ class Dispatcher:
                 args=[feed_url, channel_id],
                 id=f"rss:{channel_id}:{feed_url}",
                 replace_existing=True,
-                next_run_time=__import__("datetime").datetime.now(),  # run immediately
+                next_run_time=datetime.now(),  # run immediately on registration
             )
 
         for keyword in channel.get("keywords", []):

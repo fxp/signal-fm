@@ -118,6 +118,8 @@ async def now_playing():
     if not _scheduler or not _scheduler._current:
         return NowPlayingResponse(status="idle")
     item = _scheduler._current
+    from pathlib import Path
+    audio_filename = Path(item.audio_path).name if item.audio_path else ""
     return NowPlayingResponse(
         status="playing",
         title=item.title,
@@ -126,6 +128,7 @@ async def now_playing():
         score_reason=item.score_reason,
         url=item.url,
         channel_id=item.channel_id,
+        audio_url=f"/api/audio/{audio_filename}" if audio_filename else None,
     )
 
 
@@ -142,6 +145,23 @@ async def get_queue():
         )
         for item in sorted(_scheduler._queue, key=lambda x: x.priority)[:20]
     ]
+
+
+@app.post("/api/skip")
+async def skip_current():
+    """Skip the currently playing item."""
+    if not _scheduler or not _scheduler._current:
+        return {"ok": False, "reason": "nothing playing"}
+    _scheduler._interrupt.set()
+    return {"ok": True}
+
+
+@app.get("/api/history")
+async def get_history():
+    """Return the last 50 played items."""
+    if not _scheduler:
+        return []
+    return list(reversed(_scheduler._history))
 
 
 @app.get("/api/audio/{filename}")
@@ -163,6 +183,23 @@ async def websocket_endpoint(websocket: WebSocket):
         return
 
     q = _scheduler.subscribe()
+    # Push current state immediately on connect
+    if _scheduler._current:
+        item = _scheduler._current
+        audio_filename = Path(item.audio_path).name if item.audio_path else ""
+        await websocket.send_json({
+            "status": "playing",
+            "title": item.title,
+            "source": item.source,
+            "score": item.score,
+            "score_reason": item.score_reason,
+            "url": item.url,
+            "channel_id": item.channel_id,
+            "audio_url": f"/api/audio/{audio_filename}" if audio_filename else "",
+        })
+    else:
+        await websocket.send_json({"status": "idle"})
+
     try:
         while True:
             meta = await asyncio.wait_for(q.get(), timeout=30)
