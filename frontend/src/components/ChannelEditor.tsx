@@ -25,6 +25,9 @@ export default function ChannelEditor({ channels, onCreate, onDelete }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [triggering, setTriggering] = useState<string | null>(null);
+  const [ingestTarget, setIngestTarget] = useState<string | null>(null);
+  const [ingestText, setIngestText] = useState("");
+  const [ingesting, setIngesting] = useState(false);
 
   const triggerFetch = async (id: string) => {
     setTriggering(id);
@@ -32,6 +35,25 @@ export default function ChannelEditor({ channels, onCreate, onDelete }: Props) {
       await fetch(`${API_BASE}/api/channels/${id}/trigger`, { method: "POST" });
     } finally {
       setTriggering(null);
+    }
+  };
+
+  const submitIngest = async () => {
+    if (!ingestTarget || !ingestText.trim()) return;
+    setIngesting(true);
+    const isUrl = ingestText.trim().startsWith("http");
+    try {
+      await fetch(`${API_BASE}/api/channels/${ingestTarget}/ingest`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          isUrl ? { url: ingestText.trim() } : { content: ingestText.trim() }
+        ),
+      });
+      setIngestText("");
+      setIngestTarget(null);
+    } finally {
+      setIngesting(false);
     }
   };
   const [form, setForm] = useState({
@@ -123,29 +145,58 @@ export default function ChannelEditor({ channels, onCreate, onDelete }: Props) {
           <div style={styles.empty}>还没有频道，点击"新建频道"开始</div>
         )}
         {channels.map((ch) => (
-          <div key={ch.id} style={styles.channelCard}>
-            <div style={styles.channelInfo}>
-              <div style={styles.channelName}>{ch.name}</div>
-              <div style={styles.channelMeta}>
-                {ch.topic} · {STYLE_LABELS[ch.style] || ch.style} · {VOICE_LABELS[ch.voice] || ch.voice} · 每 {ch.interval_minutes} 分钟
+          <div key={ch.id} style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            <div style={styles.channelCard}>
+              <div style={styles.channelInfo}>
+                <div style={styles.channelName}>{ch.name}</div>
+                <div style={styles.channelMeta}>
+                  {ch.topic} · {STYLE_LABELS[ch.style] || ch.style} · {VOICE_LABELS[ch.voice] || ch.voice} · 每 {ch.interval_minutes} 分钟
+                </div>
+                <div style={styles.channelTags}>
+                  {ch.rss_feeds.length > 0 && <Tag>{ch.rss_feeds.length} 个 RSS</Tag>}
+                  {ch.keywords.length > 0 && <Tag>{ch.keywords.join("、")}</Tag>}
+                  {ch.crawl_urls.length > 0 && <Tag>{ch.crawl_urls.length} 个爬虫</Tag>}
+                </div>
               </div>
-              <div style={styles.channelTags}>
-                {ch.rss_feeds.length > 0 && <Tag>{ch.rss_feeds.length} 个 RSS</Tag>}
-                {ch.keywords.length > 0 && <Tag>{ch.keywords.join("、")}</Tag>}
-                {ch.crawl_urls.length > 0 && <Tag>{ch.crawl_urls.length} 个爬虫</Tag>}
+              <div style={styles.cardActions}>
+                <button
+                  style={{ ...styles.injectBtn, color: ingestTarget === ch.id ? "var(--accent2)" : "var(--text2)" }}
+                  onClick={() => setIngestTarget(ingestTarget === ch.id ? null : ch.id)}
+                  title="注入内容"
+                >
+                  +
+                </button>
+                <button
+                  style={{ ...styles.triggerBtn, opacity: triggering === ch.id ? 0.5 : 1 }}
+                  onClick={() => triggerFetch(ch.id)}
+                  disabled={triggering === ch.id}
+                  title="立即抓取"
+                >
+                  {triggering === ch.id ? "⟳" : "↺"}
+                </button>
+                <button style={styles.deleteBtn} onClick={() => onDelete(ch.id)} title="删除">✕</button>
               </div>
             </div>
-            <div style={styles.cardActions}>
-              <button
-                style={{ ...styles.triggerBtn, opacity: triggering === ch.id ? 0.5 : 1 }}
-                onClick={() => triggerFetch(ch.id)}
-                disabled={triggering === ch.id}
-                title="立即抓取"
-              >
-                {triggering === ch.id ? "⟳" : "↺"}
-              </button>
-              <button style={styles.deleteBtn} onClick={() => onDelete(ch.id)} title="删除">✕</button>
-            </div>
+            {ingestTarget === ch.id && (
+              <div style={styles.ingestPanel}>
+                <textarea
+                  style={{ ...styles.input, height: 60, marginBottom: 0 }}
+                  value={ingestText}
+                  onChange={(e) => setIngestText(e.target.value)}
+                  placeholder="粘贴文章 URL 或直接粘贴文章内容（将经过 AI 评分后注入播报队列）"
+                />
+                <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                  <button style={styles.cancelBtn} onClick={() => { setIngestTarget(null); setIngestText(""); }}>取消</button>
+                  <button
+                    style={{ ...styles.submitBtn, padding: "6px 16px", fontSize: 13, marginTop: 0, opacity: ingesting || !ingestText.trim() ? 0.5 : 1 }}
+                    onClick={submitIngest}
+                    disabled={ingesting || !ingestText.trim()}
+                  >
+                    {ingesting ? "注入中…" : "注入播报"}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -188,6 +239,9 @@ const styles: Record<string, React.CSSProperties> = {
   channelMeta: { fontSize: 11, color: "var(--text2)" },
   channelTags: { display: "flex", flexWrap: "wrap", gap: 4, marginTop: 2 },
   cardActions: { display: "flex", flexDirection: "column", gap: 4, alignItems: "center" },
+  injectBtn: { fontSize: 18, fontWeight: 700, padding: "2px 6px", cursor: "pointer", border: "1px solid var(--border)", borderRadius: 6, background: "var(--surface)", lineHeight: 1 },
   triggerBtn: { color: "var(--accent)", fontSize: 16, padding: 4, transition: "opacity 0.2s", cursor: "pointer" },
   deleteBtn: { color: "var(--text3)", fontSize: 14, padding: 4 },
+  ingestPanel: { background: "var(--surface2)", border: "1px solid var(--border)", borderTop: "none", borderRadius: "0 0 10px 10px", padding: "10px 14px", display: "flex", flexDirection: "column", gap: 8 },
+  cancelBtn: { fontSize: 12, color: "var(--text2)", padding: "6px 12px", border: "1px solid var(--border)", borderRadius: 6, cursor: "pointer" },
 };

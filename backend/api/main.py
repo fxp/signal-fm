@@ -202,6 +202,73 @@ async def get_feedback(channel_id: str, limit: int = 50):
     return [_json.loads(r) for r in raw]
 
 
+class IngestRequest(BaseModel):
+    title: str = ""
+    content: str = ""
+    url: str = ""
+    source: str = "手动注入"
+
+
+@app.post("/api/channels/{channel_id}/ingest")
+async def ingest_document(channel_id: str, body: IngestRequest):
+    """Manually inject a document into the channel's processing pipeline.
+    Supports plain text or URL (will be fetched). Goes through full scoring + TTS.
+    """
+    ch = _channels.get(channel_id)
+    if not ch:
+        raise HTTPException(status_code=404, detail="Channel not found")
+    if not _redis:
+        raise HTTPException(status_code=503, detail="Redis not ready")
+
+    content = body.content
+    title = body.title
+    url = body.url
+
+    # If URL provided and no content, fetch it
+    if url and not content:
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.get(url, follow_redirects=True,
+                                        headers={"User-Agent": "Mozilla/5.0"})
+                # Simple text extraction from HTML
+                import re
+                text = resp.text
+                text = re.sub(r"<script[^>]*>.*?</script>", "", text, flags=re.DOTALL)
+                text = re.sub(r"<style[^>]*>.*?</style>", "", text, flags=re.DOTALL)
+                text = re.sub(r"<[^>]+>", " ", text)
+                text = re.sub(r"\s+", " ", text).strip()
+                content = text[:3000]
+                if not title:
+                    # Try to get title from HTML
+                    m = re.search(r"<title[^>]*>(.*?)</title>", resp.text, re.IGNORECASE | re.DOTALL)
+                    title = m.group(1).strip() if m else url
+        except Exception as e:
+            raise HTTPException(status_code=422, detail=f"Failed to fetch URL: {e}")
+
+    if not content and not title:
+        raise HTTPException(status_code=400, detail="Either content or url must be provided")
+
+    if not title:
+        title = content[:80].strip()
+
+    from datetime import datetime, timezone
+    await _redis.xadd(
+        "signal:raw",
+        {
+            "url": url or f"manual:{channel_id}:{int(__import__('time').time())}",
+            "title": title,
+            "content": content[:2000],
+            "source": body.source,
+            "published_at": datetime.now(timezone.utc).isoformat(),
+            "channel_id": channel_id,
+        },
+        maxlen=1000,
+    )
+    logger.info(f"[ingest] manual injection: '{title[:60]}' → channel {channel_id}")
+    return {"ok": True, "title": title, "content_length": len(content)}
+
+
 @app.post("/api/channels/{channel_id}/trigger")
 async def trigger_channel_fetch(channel_id: str):
     """Immediately trigger data fetch for a channel (runs all RSS/crawl jobs now)."""
