@@ -37,6 +37,7 @@ class Dispatcher:
                 args=[feed_url, channel_id],
                 id=f"rss:{channel_id}:{feed_url}",
                 replace_existing=True,
+                next_run_time=__import__("datetime").datetime.now(),  # run immediately
             )
 
         for keyword in channel.get("keywords", []):
@@ -48,6 +49,7 @@ class Dispatcher:
                     args=[keyword, channel_id],
                     id=f"news:{channel_id}:{keyword}",
                     replace_existing=True,
+                    next_run_time=__import__("datetime").datetime.now(),
                 )
 
     async def _fetch_rss(self, feed_url: str, channel_id: str):
