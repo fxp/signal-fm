@@ -2,6 +2,7 @@
 FastAPI backend: REST API + WebSocket for real-time metadata push.
 """
 import asyncio
+import json as _json
 import logging
 import os
 import uuid
@@ -15,6 +16,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+
+CHANNELS_KEY = "signal:channels"  # Redis hash: channel_id -> JSON
 
 from ..broadcast.scheduler import BroadcastScheduler
 from ..ingestion.dispatcher import Dispatcher
@@ -47,6 +50,17 @@ async def lifespan(app: FastAPI):
     intelligence_worker = IntelligenceWorker(_redis, glm_key, _channels)
     synthesis_worker = SynthesisWorker(_redis)
     _scheduler = BroadcastScheduler(_redis)
+
+    # Restore persisted channels from Redis
+    stored = await _redis.hgetall(CHANNELS_KEY)
+    for ch_id_bytes, ch_json_bytes in stored.items():
+        try:
+            ch = _json.loads(ch_json_bytes)
+            _channels[ch["id"]] = ch
+            _dispatcher.register_channel(ch)
+            logger.info(f"[startup] restored channel: {ch['name']} ({ch['id']})")
+        except Exception as e:
+            logger.warning(f"[startup] skipping malformed channel: {e}")
 
     await _dispatcher.start()
 
@@ -85,6 +99,9 @@ async def create_channel(body: ChannelCreate):
     }
     _channels[channel_id] = channel
 
+    if _redis:
+        await _redis.hset(CHANNELS_KEY, channel_id, _json.dumps(channel))
+
     if _dispatcher:
         _dispatcher.register_channel(channel)
 
@@ -109,6 +126,8 @@ async def delete_channel(channel_id: str):
     if channel_id not in _channels:
         raise HTTPException(status_code=404, detail="Channel not found")
     del _channels[channel_id]
+    if _redis:
+        await _redis.hdel(CHANNELS_KEY, channel_id)
     return {"ok": True}
 
 
