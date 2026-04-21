@@ -21,6 +21,7 @@ CHANNELS_KEY = "signal:channels"  # Redis hash: channel_id -> JSON
 
 from ..broadcast.scheduler import BroadcastScheduler
 from ..ingestion.dispatcher import Dispatcher
+from ..intelligence.calibrator import FeedbackCalibrator
 from ..intelligence.worker import IntelligenceWorker
 from ..synthesis.worker import SynthesisWorker
 from .models import ChannelCreate, ChannelResponse, NowPlayingResponse, QueueItem
@@ -61,6 +62,15 @@ async def lifespan(app: FastAPI):
             logger.info(f"[startup] restored channel: {ch['name']} ({ch['id']})")
         except Exception as e:
             logger.warning(f"[startup] skipping malformed channel: {e}")
+
+    calibrator = FeedbackCalibrator(_redis, glm_key, _channels)
+    _dispatcher.scheduler.add_job(
+        calibrator.run_once,
+        "interval",
+        hours=1,
+        id="feedback_calibrator",
+        replace_existing=True,
+    )
 
     await _dispatcher.start()
 
@@ -161,6 +171,25 @@ async def submit_feedback(body: FeedbackRequest):
     await _redis.ltrim(key, 0, 999)  # keep last 1000 feedbacks per channel
     logger.info(f"[feedback] {'👍' if body.rating > 0 else '👎'} score={body.score} channel={body.channel_id} — {body.title[:40]}")
     return {"ok": True}
+
+
+@app.post("/api/feedback/{channel_id}/calibrate")
+async def calibrate_channel_preference(channel_id: str):
+    """Manually trigger preference calibration for a channel based on feedback."""
+    ch = _channels.get(channel_id)
+    if not ch:
+        raise HTTPException(status_code=404, detail="Channel not found")
+    if not _redis:
+        raise HTTPException(status_code=503, detail="Redis not ready")
+
+    glm_key = os.getenv("GLM_API_KEY", "")
+    calibrator = FeedbackCalibrator(_redis, glm_key, _channels)
+    new_pref = await calibrator.calibrate_channel(channel_id)
+    if new_pref:
+        ch["preference"] = new_pref
+        await _redis.hset(CHANNELS_KEY, channel_id, _json.dumps(ch))
+        return {"ok": True, "new_preference": new_pref, "channel_id": channel_id}
+    return {"ok": False, "reason": "not enough feedback (need 5+)"}
 
 
 @app.get("/api/feedback/{channel_id}")
