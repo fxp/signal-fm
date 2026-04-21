@@ -75,7 +75,12 @@ export default function Player({ nowPlaying, connected }: Props) {
       <div style={styles.nowPlaying}>
         {isPlaying ? (
           <>
-            <div style={styles.nowLabel}>ON AIR</div>
+            <div style={styles.nowLabelRow}>
+              <div style={styles.nowLabel}>ON AIR</div>
+              {nowPlaying.score && nowPlaying.score >= 90 && (
+                <div style={styles.breakingBadge}>🔴 BREAKING</div>
+              )}
+            </div>
             <div style={styles.title}>{nowPlaying.title}</div>
             <div style={styles.meta}>
               <span style={styles.source}>来源：{nowPlaying.source}</span>
@@ -138,6 +143,10 @@ export default function Player({ nowPlaying, connected }: Props) {
           0%, 100% { height: 6px; }
           50% { height: 20px; }
         }
+        @keyframes breakingPulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
       `}</style>
     </div>
   );
@@ -152,7 +161,9 @@ const styles: Record<string, React.CSSProperties> = {
   tagline: { fontSize: 11, color: "var(--text2)", letterSpacing: 1 },
   dot: { width: 8, height: 8, borderRadius: "50%", marginLeft: "auto", flexShrink: 0 },
   nowPlaying: { background: "var(--surface2)", borderRadius: 12, padding: "20px", minHeight: 120, display: "flex", flexDirection: "column", gap: 8 },
-  nowLabel: { fontSize: 10, fontWeight: 700, letterSpacing: 2, color: "var(--accent2)", marginBottom: 4 },
+  nowLabelRow: { display: "flex", alignItems: "center", gap: 10, marginBottom: 4 },
+  nowLabel: { fontSize: 10, fontWeight: 700, letterSpacing: 2, color: "var(--accent2)" },
+  breakingBadge: { fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "#ff3b30", background: "rgba(255,59,48,0.12)", borderRadius: 4, padding: "2px 6px", animation: "breakingPulse 1s ease-in-out infinite" },
   title: { fontSize: 16, fontWeight: 600, lineHeight: 1.4 },
   meta: { display: "flex", gap: 16, marginTop: 4 },
   source: { fontSize: 12, color: "var(--text2)" },

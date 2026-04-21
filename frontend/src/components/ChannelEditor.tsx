@@ -1,6 +1,8 @@
 import { useState } from "react";
 import type { Channel } from "../hooks/useApi";
 
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
+
 interface Props {
   channels: Channel[];
   onCreate: (data: Omit<Channel, "id">) => Promise<void>;
@@ -16,6 +18,16 @@ const STYLE_LABELS: Record<string, string> = {
 export default function ChannelEditor({ channels, onCreate, onDelete }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [triggering, setTriggering] = useState<string | null>(null);
+
+  const triggerFetch = async (id: string) => {
+    setTriggering(id);
+    try {
+      await fetch(`${API_BASE}/api/channels/${id}/trigger`, { method: "POST" });
+    } finally {
+      setTriggering(null);
+    }
+  };
   const [form, setForm] = useState({
     name: "",
     topic: "",
@@ -107,9 +119,20 @@ export default function ChannelEditor({ channels, onCreate, onDelete }: Props) {
               <div style={styles.channelTags}>
                 {ch.rss_feeds.length > 0 && <Tag>{ch.rss_feeds.length} 个 RSS</Tag>}
                 {ch.keywords.length > 0 && <Tag>{ch.keywords.join("、")}</Tag>}
+                {ch.crawl_urls.length > 0 && <Tag>{ch.crawl_urls.length} 个爬虫</Tag>}
               </div>
             </div>
-            <button style={styles.deleteBtn} onClick={() => onDelete(ch.id)} title="删除">✕</button>
+            <div style={styles.cardActions}>
+              <button
+                style={{ ...styles.triggerBtn, opacity: triggering === ch.id ? 0.5 : 1 }}
+                onClick={() => triggerFetch(ch.id)}
+                disabled={triggering === ch.id}
+                title="立即抓取"
+              >
+                {triggering === ch.id ? "⟳" : "↺"}
+              </button>
+              <button style={styles.deleteBtn} onClick={() => onDelete(ch.id)} title="删除">✕</button>
+            </div>
           </div>
         ))}
       </div>
@@ -151,5 +174,7 @@ const styles: Record<string, React.CSSProperties> = {
   channelName: { fontWeight: 600, fontSize: 14 },
   channelMeta: { fontSize: 11, color: "var(--text2)" },
   channelTags: { display: "flex", flexWrap: "wrap", gap: 4, marginTop: 2 },
+  cardActions: { display: "flex", flexDirection: "column", gap: 4, alignItems: "center" },
+  triggerBtn: { color: "var(--accent)", fontSize: 16, padding: 4, transition: "opacity 0.2s", cursor: "pointer" },
   deleteBtn: { color: "var(--text3)", fontSize: 14, padding: 4 },
 };

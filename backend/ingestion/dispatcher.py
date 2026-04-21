@@ -1,6 +1,7 @@
 """
 Dispatcher: schedules fetchers and pushes new items into Redis Stream.
 """
+import asyncio
 import json
 import logging
 from dataclasses import asdict
@@ -102,6 +103,23 @@ class Dispatcher:
         }
         await self.redis.xadd(STREAM_KEY, payload, maxlen=1000)
         logger.info(f"[dispatch] pushed: {item.title[:60]}")
+
+    async def trigger_channel(self, channel: dict) -> int:
+        """Immediately run all fetch jobs for a channel. Returns number of jobs triggered."""
+        channel_id = channel["id"]
+        triggered = 0
+        for feed_url in channel.get("rss_feeds", []):
+            asyncio.create_task(self._fetch_rss(feed_url, channel_id))
+            triggered += 1
+        for keyword in channel.get("keywords", []):
+            if self.news_fetcher:
+                asyncio.create_task(self._fetch_news(keyword, channel_id))
+                triggered += 1
+        for crawl_url in channel.get("crawl_urls", []):
+            asyncio.create_task(self._crawl_site(crawl_url, channel_id))
+            triggered += 1
+        logger.info(f"[trigger] channel={channel_id}, jobs={triggered}")
+        return triggered
 
     async def start(self):
         self.scheduler.start()

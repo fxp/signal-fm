@@ -112,6 +112,18 @@ async def delete_channel(channel_id: str):
     return {"ok": True}
 
 
+@app.post("/api/channels/{channel_id}/trigger")
+async def trigger_channel_fetch(channel_id: str):
+    """Immediately trigger data fetch for a channel (runs all RSS/crawl jobs now)."""
+    ch = _channels.get(channel_id)
+    if not ch:
+        raise HTTPException(status_code=404, detail="Channel not found")
+    if not _dispatcher:
+        raise HTTPException(status_code=503, detail="Dispatcher not ready")
+    count = await _dispatcher.trigger_channel(ch)
+    return {"ok": True, "jobs_triggered": count}
+
+
 # --- Playback endpoints ---
 
 @app.get("/api/now-playing", response_model=NowPlayingResponse)
