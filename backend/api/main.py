@@ -7,13 +7,14 @@ import os
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, AsyncGenerator
 
 import redis.asyncio as redis_asyncio
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
 from ..broadcast.scheduler import BroadcastScheduler
 from ..ingestion.dispatcher import Dispatcher
@@ -162,6 +163,73 @@ async def get_history():
     if not _scheduler:
         return []
     return list(reversed(_scheduler._history))
+
+
+class AskRequest(BaseModel):
+    question: str
+
+
+@app.post("/api/ask")
+async def ask_about_current(body: AskRequest):
+    """Stream a GLM-4 answer about the currently playing article."""
+    if not _scheduler or not _scheduler._current:
+        async def no_content():
+            yield "data: 当前没有正在播出的内容，请等待播报开始后再提问。\n\n"
+            yield "data: [DONE]\n\n"
+        return StreamingResponse(no_content(), media_type="text/event-stream")
+
+    item = _scheduler._current
+    glm_key = os.getenv("GLM_API_KEY", "")
+    if not glm_key:
+        raise HTTPException(status_code=500, detail="GLM_API_KEY not configured")
+
+    context = f"""标题：{item.title}
+来源：{item.source}
+原文链接：{item.url}
+播报内容：{item.text}"""
+
+    system_prompt = (
+        "你是 Signal FM 的智能助理，正在帮助用户深入了解刚才播报的新闻内容。"
+        "请基于提供的播报内容回答用户问题，如实回答，不要编造原文中没有的信息。"
+        "回答简洁、准确，用中文。"
+    )
+
+    async def stream_response() -> AsyncGenerator[str, None]:
+        try:
+            from zhipuai import ZhipuAI
+            import concurrent.futures
+
+            client = ZhipuAI(api_key=glm_key)
+
+            loop = asyncio.get_event_loop()
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                response = await loop.run_in_executor(
+                    pool,
+                    lambda: client.chat.completions.create(
+                        model="glm-4-flash",
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": f"关于刚才的播报内容：\n{context}\n\n用户问题：{body.question}"},
+                        ],
+                        stream=True,
+                        temperature=0.5,
+                        max_tokens=512,
+                    ),
+                )
+
+                for chunk in response:
+                    delta = chunk.choices[0].delta
+                    if delta and delta.content:
+                        text = delta.content.replace("\n", "\\n")
+                        yield f"data: {text}\n\n"
+
+        except Exception as e:
+            logger.error(f"Ask endpoint error: {e}")
+            yield f"data: 抱歉，回答时发生错误：{e}\n\n"
+        finally:
+            yield "data: [DONE]\n\n"
+
+    return StreamingResponse(stream_response(), media_type="text/event-stream")
 
 
 @app.get("/api/audio/{filename}")
