@@ -105,6 +105,7 @@ class IntelligenceWorker:
                     "score": str(script.score),
                     "url": script.url,
                     "score_reason": score_result.reason,
+                    "voice": channel.get("voice", "zh-CN-female"),
                 },
                 maxlen=500,
             )

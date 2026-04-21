@@ -11,6 +11,7 @@ export interface Channel {
   crawl_urls: string[];
   preference: string;
   style: string;
+  voice: string;
   interval_minutes: number;
 }
 

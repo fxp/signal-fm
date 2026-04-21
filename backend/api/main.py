@@ -112,6 +112,48 @@ async def delete_channel(channel_id: str):
     return {"ok": True}
 
 
+class FeedbackRequest(BaseModel):
+    url: str
+    title: str
+    channel_id: str
+    score: int
+    rating: int  # +1 (thumbs up) or -1 (thumbs down)
+
+
+@app.post("/api/feedback")
+async def submit_feedback(body: FeedbackRequest):
+    """Store user rating for a played item. Used to build scoring feedback loop."""
+    if body.rating not in (1, -1):
+        raise HTTPException(status_code=400, detail="rating must be +1 or -1")
+    if not _redis:
+        raise HTTPException(status_code=503, detail="Redis not ready")
+
+    import time
+    key = f"signal:feedback:{body.channel_id}"
+    entry = {
+        "url": body.url,
+        "title": body.title,
+        "ai_score": body.score,
+        "user_rating": body.rating,
+        "ts": int(time.time()),
+    }
+    import json as _json
+    await _redis.lpush(key, _json.dumps(entry))
+    await _redis.ltrim(key, 0, 999)  # keep last 1000 feedbacks per channel
+    logger.info(f"[feedback] {'👍' if body.rating > 0 else '👎'} score={body.score} channel={body.channel_id} — {body.title[:40]}")
+    return {"ok": True}
+
+
+@app.get("/api/feedback/{channel_id}")
+async def get_feedback(channel_id: str, limit: int = 50):
+    """Return recent feedback entries for a channel."""
+    if not _redis:
+        return []
+    import json as _json
+    raw = await _redis.lrange(f"signal:feedback:{channel_id}", 0, limit - 1)
+    return [_json.loads(r) for r in raw]
+
+
 @app.post("/api/channels/{channel_id}/trigger")
 async def trigger_channel_fetch(channel_id: str):
     """Immediately trigger data fetch for a channel (runs all RSS/crawl jobs now)."""

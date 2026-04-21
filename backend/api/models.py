@@ -10,6 +10,7 @@ class ChannelCreate(BaseModel):
     crawl_urls: list[str] = []
     preference: str = ""
     style: str = "formal"
+    voice: str = "zh-CN-female"
     interval_minutes: int = 15
 
 
@@ -22,6 +23,7 @@ class ChannelResponse(BaseModel):
     crawl_urls: list[str] = []
     preference: str
     style: str
+    voice: str = "zh-CN-female"
     interval_minutes: int
 
 

@@ -15,6 +15,12 @@ const STYLE_LABELS: Record<string, string> = {
   deep: "深度解读",
 };
 
+const VOICE_LABELS: Record<string, string> = {
+  "zh-CN-female": "晓晓（女）",
+  "zh-CN-male": "云希（男）",
+  "zh-TW-female": "晓臻（台湾女）",
+};
+
 export default function ChannelEditor({ channels, onCreate, onDelete }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -36,6 +42,7 @@ export default function ChannelEditor({ channels, onCreate, onDelete }: Props) {
     crawl_urls: "",
     preference: "",
     style: "formal",
+    voice: "zh-CN-female",
     interval_minutes: 15,
   });
 
@@ -51,10 +58,11 @@ export default function ChannelEditor({ channels, onCreate, onDelete }: Props) {
         crawl_urls: form.crawl_urls.split("\n").map((s) => s.trim()).filter(Boolean),
         preference: form.preference,
         style: form.style,
+        voice: form.voice,
         interval_minutes: form.interval_minutes,
       });
       setShowForm(false);
-      setForm({ name: "", topic: "", rss_feeds: "", keywords: "", crawl_urls: "", preference: "", style: "formal", interval_minutes: 15 });
+      setForm({ name: "", topic: "", rss_feeds: "", keywords: "", crawl_urls: "", preference: "", style: "formal", voice: "zh-CN-female", interval_minutes: 15 });
     } finally {
       setSubmitting(false);
     }
@@ -95,6 +103,11 @@ export default function ChannelEditor({ channels, onCreate, onDelete }: Props) {
                 {Object.entries(STYLE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>
             </Field>
+            <Field label="主播音色">
+              <select style={styles.input} value={form.voice} onChange={(e) => setForm({ ...form, voice: e.target.value })}>
+                {Object.entries(VOICE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </select>
+            </Field>
             <Field label="抓取间隔（分钟）">
               <input type="number" style={styles.input} value={form.interval_minutes} onChange={(e) => setForm({ ...form, interval_minutes: Number(e.target.value) })} min={5} max={60} />
             </Field>
@@ -114,7 +127,7 @@ export default function ChannelEditor({ channels, onCreate, onDelete }: Props) {
             <div style={styles.channelInfo}>
               <div style={styles.channelName}>{ch.name}</div>
               <div style={styles.channelMeta}>
-                {ch.topic} · {STYLE_LABELS[ch.style] || ch.style} · 每 {ch.interval_minutes} 分钟
+                {ch.topic} · {STYLE_LABELS[ch.style] || ch.style} · {VOICE_LABELS[ch.voice] || ch.voice} · 每 {ch.interval_minutes} 分钟
               </div>
               <div style={styles.channelTags}>
                 {ch.rss_feeds.length > 0 && <Tag>{ch.rss_feeds.length} 个 RSS</Tag>}
@@ -165,7 +178,7 @@ const styles: Record<string, React.CSSProperties> = {
   addBtn: { fontSize: 12, color: "var(--accent)", fontWeight: 600, padding: "4px 10px", border: "1px solid var(--accent)", borderRadius: 8 },
   form: { display: "flex", flexDirection: "column", gap: 12, background: "var(--surface2)", borderRadius: 12, padding: 16 },
   input: { background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", color: "var(--text)", fontSize: 13, width: "100%", outline: "none", resize: "vertical" },
-  row: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },
+  row: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 },
   submitBtn: { background: "linear-gradient(135deg, var(--accent), var(--accent2))", color: "#fff", fontWeight: 700, padding: "10px", borderRadius: 10, fontSize: 14, marginTop: 4 },
   list: { display: "flex", flexDirection: "column", gap: 8 },
   empty: { color: "var(--text3)", fontSize: 13, textAlign: "center", padding: "20px 0" },

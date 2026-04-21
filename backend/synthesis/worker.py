@@ -57,6 +57,8 @@ class SynthesisWorker:
     async def _process(self, msg_id: bytes, fields: dict[bytes, bytes]):
         data = {k.decode(): v.decode() for k, v in fields.items()}
         text = data.get("text", "")
+        voice_key = data.get("voice", "zh-CN-female")
+        self.tts.set_voice(voice_key)
 
         audio_path = await self.tts.synthesize(text)
 
