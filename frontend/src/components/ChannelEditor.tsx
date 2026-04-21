@@ -21,6 +21,51 @@ const VOICE_LABELS: Record<string, string> = {
   "zh-TW-female": "晓臻（台湾女）",
 };
 
+const TEMPLATES: Array<{ label: string; data: Omit<Channel, "id"> }> = [
+  {
+    label: "🤖 AI 速报",
+    data: {
+      name: "AI 速报",
+      topic: "AI大模型与科技产品进展",
+      rss_feeds: ["https://36kr.com/feed", "https://feeds.feedburner.com/venturebeat/SZYF"],
+      keywords: ["GPT", "Claude", "Gemini", "大模型", "LLM"],
+      crawl_urls: [],
+      preference: "优先播报GPT/Claude/Gemini等顶级模型的重大进展，淡化纯融资新闻",
+      style: "formal",
+      voice: "zh-CN-female",
+      interval_minutes: 15,
+    },
+  },
+  {
+    label: "💰 财经日报",
+    data: {
+      name: "财经日报",
+      topic: "A股、港股及宏观经济动态",
+      rss_feeds: ["https://feeds.bbci.co.uk/chinese/simp/business/rss.xml"],
+      keywords: ["A股", "港股", "美联储", "人民币", "上证"],
+      crawl_urls: [],
+      preference: "关注重大政策变化、指数涨跌超3%以上的市场动态，淡化个股分析",
+      style: "formal",
+      voice: "zh-CN-male",
+      interval_minutes: 30,
+    },
+  },
+  {
+    label: "🔬 科技周刊",
+    data: {
+      name: "科技周刊",
+      topic: "前沿科技与产品创新",
+      rss_feeds: ["https://www.huxiu.com/rss/0.xml", "https://sspai.com/feed"],
+      keywords: ["产品发布", "新技术", "创新"],
+      crawl_urls: [],
+      preference: "聚焦影响行业格局的产品发布和技术突破，深度解读优先",
+      style: "deep",
+      voice: "zh-CN-female",
+      interval_minutes: 60,
+    },
+  },
+];
+
 export default function ChannelEditor({ channels, onCreate, onDelete }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -98,6 +143,23 @@ export default function ChannelEditor({ channels, onCreate, onDelete }: Props) {
           {showForm ? "✕ 取消" : "+ 新建频道"}
         </button>
       </div>
+
+      {!showForm && channels.length === 0 && (
+        <div style={styles.templates}>
+          <div style={styles.templateLabel}>快速开始：</div>
+          <div style={styles.templateRow}>
+            {TEMPLATES.map((t) => (
+              <button
+                key={t.label}
+                style={styles.templateBtn}
+                onClick={() => onCreate(t.data)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {showForm && (
         <form onSubmit={handleSubmit} style={styles.form}>
@@ -244,4 +306,8 @@ const styles: Record<string, React.CSSProperties> = {
   deleteBtn: { color: "var(--text3)", fontSize: 14, padding: 4 },
   ingestPanel: { background: "var(--surface2)", border: "1px solid var(--border)", borderTop: "none", borderRadius: "0 0 10px 10px", padding: "10px 14px", display: "flex", flexDirection: "column", gap: 8 },
   cancelBtn: { fontSize: 12, color: "var(--text2)", padding: "6px 12px", border: "1px solid var(--border)", borderRadius: 6, cursor: "pointer" },
+  templates: { display: "flex", flexDirection: "column", gap: 8, background: "var(--surface2)", borderRadius: 10, padding: "12px 14px" },
+  templateLabel: { fontSize: 11, color: "var(--text3)", fontWeight: 500 },
+  templateRow: { display: "flex", gap: 8, flexWrap: "wrap" },
+  templateBtn: { fontSize: 12, color: "var(--accent)", background: "var(--bg)", border: "1px solid var(--accent)", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontWeight: 500 },
 };
