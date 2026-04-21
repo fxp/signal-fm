@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import type { NowPlaying } from "../hooks/useWebSocket";
+import ImpactPanel from "./ImpactPanel";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
 interface Props {
   nowPlaying: NowPlaying;
   connected: boolean;
+  companyName: string;
 }
 
-export default function Player({ nowPlaying, connected }: Props) {
+export default function Player({ nowPlaying, connected, companyName }: Props) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const prevAudioUrl = useRef<string>("");
@@ -98,6 +100,7 @@ export default function Player({ nowPlaying, connected }: Props) {
                 查看原文 →
               </a>
             )}
+            <ImpactPanel nowPlaying={nowPlaying} companyName={companyName} />
           </>
         ) : (
           <div style={styles.idle}>

@@ -17,7 +17,8 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-CHANNELS_KEY = "signal:channels"  # Redis hash: channel_id -> JSON
+CHANNELS_KEY = "signal:channels"   # Redis hash: channel_id -> JSON
+SETTINGS_KEY  = "signal:settings"  # Redis hash: setting_name -> value
 
 from ..broadcast.scheduler import BroadcastScheduler
 from ..ingestion.dispatcher import Dispatcher
@@ -139,6 +140,117 @@ async def delete_channel(channel_id: str):
     if _redis:
         await _redis.hdel(CHANNELS_KEY, channel_id)
     return {"ok": True}
+
+
+class SettingsPatch(BaseModel):
+    company_name: str | None = None
+
+
+@app.get("/api/settings")
+async def get_settings():
+    if not _redis:
+        return {"company_name": os.getenv("COMPANY_NAME", "智谱")}
+    raw = await _redis.hgetall(SETTINGS_KEY)
+    data = {k.decode(): v.decode() for k, v in raw.items()}
+    return {"company_name": data.get("company_name", os.getenv("COMPANY_NAME", "智谱"))}
+
+
+@app.patch("/api/settings")
+async def patch_settings(body: SettingsPatch):
+    if not _redis:
+        raise HTTPException(status_code=503, detail="Redis not ready")
+    if body.company_name is not None:
+        await _redis.hset(SETTINGS_KEY, "company_name", body.company_name)
+    return await get_settings()
+
+
+# --- Impact analysis ---
+
+class ImpactRequest(BaseModel):
+    question: str | None = None   # optional extra focus question
+
+
+IMPACT_PROMPT = """\
+你是{company}的战略分析师，正在收听 Signal FM 的实时新闻播报。
+请对以下新闻内容进行**两段式分析**，用中文输出，语言简洁专业。
+
+新闻标题：{title}
+新闻来源：{source}
+播报内容：{text}
+{extra_q}
+---
+
+请严格按以下格式输出（用 Markdown，共两段，每段不超过 120 字）：
+
+## 对{company}业务的影响
+（分析该新闻对{company}的技术布局、产品竞争力或市场地位的潜在影响，标明利好🟢或风险🔴）
+
+## 潜在合作机会
+（列出 1-3 个具体、可落地的合作或切入点，每条一行，以"•"开头）
+"""
+
+
+@app.post("/api/analyze-impact")
+async def analyze_impact(body: ImpactRequest):
+    """Stream a two-section business impact analysis for the currently playing item."""
+    if not _scheduler or not _scheduler._current:
+        async def _idle():
+            yield "data: 当前没有正在播出的内容。\n\n"
+            yield "data: [DONE]\n\n"
+        return StreamingResponse(_idle(), media_type="text/event-stream")
+
+    item = _scheduler._current
+    glm_key = os.getenv("GLM_API_KEY", "")
+    if not glm_key:
+        raise HTTPException(status_code=500, detail="GLM_API_KEY not configured")
+
+    # Fetch company name from settings
+    company = "智谱"
+    if _redis:
+        raw = await _redis.hget(SETTINGS_KEY, "company_name")
+        if raw:
+            company = raw.decode()
+
+    extra_q = f"\n用户追加问题：{body.question}" if body.question else ""
+    prompt = IMPACT_PROMPT.format(
+        company=company,
+        title=item.title,
+        source=item.source,
+        text=item.text[:1500],
+        extra_q=extra_q,
+    )
+
+    async def stream_impact() -> AsyncGenerator[str, None]:
+        try:
+            from zhipuai import ZhipuAI
+            import concurrent.futures
+
+            client = ZhipuAI(api_key=glm_key)
+            loop = asyncio.get_event_loop()
+
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                response = await loop.run_in_executor(
+                    pool,
+                    lambda: client.chat.completions.create(
+                        model="glm-4-flash",
+                        messages=[{"role": "user", "content": prompt}],
+                        stream=True,
+                        temperature=0.4,
+                        max_tokens=600,
+                    ),
+                )
+                for chunk in response:
+                    delta = chunk.choices[0].delta
+                    if delta and delta.content:
+                        text = delta.content.replace("\n", "\\n")
+                        yield f"data: {text}\n\n"
+        except Exception as e:
+            logger.error(f"analyze-impact error: {e}")
+            yield f"data: 分析出错：{e}\n\n"
+        finally:
+            yield "data: [DONE]\n\n"
+
+    return StreamingResponse(stream_impact(), media_type="text/event-stream")
 
 
 class FeedbackRequest(BaseModel):
